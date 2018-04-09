@@ -26,7 +26,34 @@ def find_ball(opencv_image, debug=False):
 	ball = None
 	
 	## TODO: INSERT YOUR SOLUTION HERE
+	# Reduce the noise in the image
+	image = cv2.medianBlur(opencv_image, 5)
+	image = cv2.GaussianBlur(image, (3,3), 1)
+
+	# find circles
+	(h, w) = image.shape[:2]
+	circles = cv2.HoughCircles(image, cv2.HOUGH_GRADIENT, 3, w/4, param1=200, param2=60)
+
+	if circles is not None:
+		# convert the (x, y) coordinates and radius of the circles to integers
+		circles = np.round(circles[0, :]).astype("int")
 	
+		best_circle = circles[0]
+		best_circle_mean = 255
+		# loop over the (x, y) coordinates and radius of the circles
+		for (x, y, r) in circles:
+			# make sure that the circle encloses a black ball
+			circle_mask = np.zeros((h, w), np.uint8)
+			cv2.circle(circle_mask,(x,y),r,(255,255,255),-1)
+			circle_mean = cv2.mean(image, mask=circle_mask)[0]
+			print(str(circle_mean))
+			if circle_mean < best_circle_mean:
+				best_circle = np.array([x, y, r])
+				best_circle_mean = circle_mean
+			
+		if best_circle_mean < 100:
+			ball = best_circle
+
 	return ball
 
 
